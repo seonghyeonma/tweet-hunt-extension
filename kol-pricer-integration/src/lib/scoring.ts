@@ -17,8 +17,29 @@ export function scoreFollowerScale(followers: number): number {
   return 5;
 }
 
-export function scoreFollowerQuality(engagementRate: number): number {
+export function scoreFollowerQuality(
+  engagementRate: number,
+  followers: number = 0
+): number {
   // engagementRate as percentage (e.g. 1.5 means 1.5%)
+  // Adjust thresholds by follower tier — larger accounts naturally have lower ER
+  if (followers >= 50_000) {
+    // 50K+ followers: ER benchmarks are significantly lower
+    if (engagementRate > 1.0) return 100;
+    if (engagementRate >= 0.5) return 80;
+    if (engagementRate >= 0.25) return 60;
+    if (engagementRate >= 0.1) return 40;
+    return 15;
+  }
+  if (followers >= 20_000) {
+    // 20K–50K followers: moderately relaxed thresholds
+    if (engagementRate > 1.5) return 100;
+    if (engagementRate >= 0.8) return 80;
+    if (engagementRate >= 0.35) return 60;
+    if (engagementRate >= 0.15) return 35;
+    return 12;
+  }
+  // Under 20K: original thresholds
   if (engagementRate > 2) return 100;
   if (engagementRate >= 1) return 75;
   if (engagementRate >= 0.5) return 50;
@@ -35,14 +56,34 @@ export function scoreUpdateStability(cv: number): number {
 }
 
 export function scoreImpressionStability(cv: number): number {
-  if (cv < 0.2) return 100;
-  if (cv <= 0.4) return 80;
-  if (cv <= 0.6) return 60;
-  if (cv <= 0.8) return 40;
+  // Relaxed thresholds — crypto/web3 accounts naturally have high impression variance
+  if (cv < 0.3) return 100;
+  if (cv <= 0.5) return 80;
+  if (cv <= 0.8) return 60;
+  if (cv <= 1.2) return 40;
   return 20;
 }
 
-export function scoreEngagement(engagementRate: number): number {
+export function scoreEngagement(
+  engagementRate: number,
+  followers: number = 0
+): number {
+  // Adjust thresholds by follower tier — larger accounts naturally have lower ER
+  if (followers >= 50_000) {
+    if (engagementRate > 1.5) return 100;
+    if (engagementRate >= 0.8) return 80;
+    if (engagementRate >= 0.4) return 60;
+    if (engagementRate >= 0.15) return 40;
+    return 20;
+  }
+  if (followers >= 20_000) {
+    if (engagementRate > 2.0) return 100;
+    if (engagementRate >= 1.0) return 80;
+    if (engagementRate >= 0.5) return 60;
+    if (engagementRate >= 0.2) return 40;
+    return 20;
+  }
+  // Under 20K: original thresholds
   if (engagementRate > 3) return 100;
   if (engagementRate >= 2) return 80;
   if (engagementRate >= 1) return 60;
@@ -120,10 +161,10 @@ export function calculateScores(
   const updateCV = coefficientOfVariation(intervals);
 
   const followerScale = scoreFollowerScale(followers);
-  const followerQuality = scoreFollowerQuality(engagementRate);
+  const followerQuality = scoreFollowerQuality(engagementRate, followers);
   const updateStability = scoreUpdateStability(updateCV);
   const impressionStability = scoreImpressionStability(impressionCV);
-  const engagementScore = scoreEngagement(engagementRate);
+  const engagementScore = scoreEngagement(engagementRate, followers);
   const xhuntScore = scoreXHunt(xhuntSoulScore);
 
   const overall =
