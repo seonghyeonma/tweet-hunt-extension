@@ -20,17 +20,17 @@ interface KolEntry {
   notes?: string;
 }
 
-interface SoulDensityData {
+interface SoulIndexData {
+  score: number;
   content_analysis: number;
   engagement_analysis: number;
-  handle: string;
   kol_interaction: number;
-  name: string;
   profile_analysis: number;
+  xhunt_analysis: number;
+  handle: string;
+  name: string;
   reason: string;
   reason_en: string;
-  score: number;
-  xhunt_analysis: number;
 }
 
 interface ClaudeCredibility {
@@ -42,7 +42,7 @@ interface ClaudeCredibility {
   reasoning: string;
 }
 
-interface TwitterUserData {
+interface TwitterProfile {
   username: string;
   name: string;
   description: string;
@@ -59,16 +59,16 @@ interface CollectResult {
   handle: string;
   actual_price_usd: number;
   category: string;
-  profile: TwitterUserData | null;
+  profile: TwitterProfile | null;
   optionA: {
     raw_score: number | null;
     mapped_score: number;
-    sub_dimensions: Partial<SoulDensityData> | null;
+    sub_dimensions: Record<string, number> | null;
     reason_en: string | null;
   };
   optionB: {
     composite: number | null;
-    sub_dimensions: Partial<ClaudeCredibility> | null;
+    sub_dimensions: Record<string, number> | null;
     reasoning: string | null;
   };
   collected_at: string;
@@ -76,8 +76,8 @@ interface CollectResult {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const XHUNT_API_BASE = "https://kb.cryptohunt.ai/api/xhunt/proxy/public";
-const XHUNT_TIMEOUT_MS = 10_000;
+const XCLAW_API_BASE = "https://pro.xclaw.info";
+const XCLAW_TIMEOUT_MS = 30_000;
 
 // ─── XHunt Score Mapping (same as KOL-Pricer) ───────────────────────────────
 
@@ -90,27 +90,42 @@ function mapXHuntScore(soulScore: number | null): number {
   return 20;
 }
 
-// ─── Step 1: Fetch Twitter profile via XHunt public API ──────────────────────
+// ─── XClaw API helper ────────────────────────────────────────────────────────
 
-async function fetchProfile(handle: string): Promise<TwitterUserData | null> {
+function getXClawHeaders(): Record<string, string> {
+  const apiKey = process.env.XCLAW_API_KEY;
+  if (!apiKey) throw new Error("XCLAW_API_KEY not set");
+  return {
+    "X-API-KEY": apiKey,
+    "Content-Type": "application/json",
+  };
+}
+
+// ─── Step 1: Fetch Twitter profile via XClaw API ─────────────────────────────
+
+async function fetchProfile(handle: string): Promise<TwitterProfile | null> {
   try {
-    const resp = await axios.get(
-      `${XHUNT_API_BASE}/fetch/twitter/user?username=${handle.toLowerCase()}&target=k8s_kota`,
-      { timeout: XHUNT_TIMEOUT_MS }
+    const resp = await axios.post(
+      `${XCLAW_API_BASE}/user/profile_by_handle`,
+      { handle: handle.toLowerCase() },
+      { headers: getXClawHeaders(), timeout: XCLAW_TIMEOUT_MS }
     );
-    const data = resp.data?.data?.data;
+    const data = resp.data;
     if (!data) return null;
+
+    // Extract profile data (adapt to actual response structure)
+    const profile = data.data || data.result || data;
     return {
-      username: data.username || handle,
-      name: data.name || "",
-      description: data.description || "",
-      followers_count: data.public_metrics?.followers_count ?? data.followers_count ?? 0,
-      following_count: data.public_metrics?.following_count ?? data.following_count ?? 0,
-      tweet_count: data.public_metrics?.tweet_count ?? data.tweet_count ?? 0,
-      created_at: data.created_at || "",
-      is_blue_verified: data.is_blue_verified ?? false,
-      classification: data.ai?.classification ?? data.classification ?? "",
-      isKol: data.isKol ?? false,
+      username: profile.username || profile.screen_name || handle,
+      name: profile.name || "",
+      description: profile.description || profile.bio || "",
+      followers_count: profile.followers_count ?? profile.public_metrics?.followers_count ?? 0,
+      following_count: profile.following_count ?? profile.public_metrics?.following_count ?? 0,
+      tweet_count: profile.tweet_count ?? profile.statuses_count ?? profile.public_metrics?.tweet_count ?? 0,
+      created_at: profile.created_at || "",
+      is_blue_verified: profile.is_blue_verified ?? profile.verified ?? false,
+      classification: profile.classification || profile.ai?.classification || "",
+      isKol: profile.isKol ?? profile.is_kol ?? false,
     };
   } catch (err) {
     console.warn(`  [Profile] Failed for @${handle}:`, (err as Error).message);
@@ -118,22 +133,19 @@ async function fetchProfile(handle: string): Promise<TwitterUserData | null> {
   }
 }
 
-// ─── Step 2: Option A — XHunt Soul Score ─────────────────────────────────────
+// ─── Step 2: Option A — XClaw Soul Index ─────────────────────────────────────
 
-async function fetchOptionA(
-  handle: string
-): Promise<SoulDensityData | null> {
+async function fetchOptionA(handle: string): Promise<SoulIndexData | null> {
   try {
     const resp = await axios.post(
-      `${XHUNT_API_BASE}/pro/api/soul?target=k8s_kota`,
+      `${XCLAW_API_BASE}/ai/soul_index`,
       { handle: handle.toLowerCase() },
-      {
-        headers: { "Content-Type": "application/json" },
-        timeout: XHUNT_TIMEOUT_MS,
-      }
+      { headers: getXClawHeaders(), timeout: XCLAW_TIMEOUT_MS }
     );
     const data = resp.data;
-    if (data && data.score != null) return data as SoulDensityData;
+    // Handle nested response structures
+    const result = data?.data || data?.result || data;
+    if (result && result.score != null) return result as SoulIndexData;
     return null;
   } catch (err) {
     console.warn(`  [Option A] Failed for @${handle}:`, (err as Error).message);
@@ -143,7 +155,7 @@ async function fetchOptionA(
 
 // ─── Step 3: Option B — Claude Credibility Score ─────────────────────────────
 
-function buildClaudePrompt(handle: string, profile: TwitterUserData): string {
+function buildClaudePrompt(handle: string, profile: TwitterProfile): string {
   return `You are an expert crypto KOL credibility analyst. Given the following Twitter account data, assess the KOL's credibility for paid promotions.
 
 Account: @${handle}
@@ -168,7 +180,7 @@ Evaluate these dimensions and respond ONLY in this exact JSON format, no other t
 
 async function fetchOptionB(
   handle: string,
-  profile: TwitterUserData,
+  profile: TwitterProfile,
   anthropic: Anthropic
 ): Promise<ClaudeCredibility | null> {
   try {
@@ -182,7 +194,10 @@ async function fetchOptionB(
 
     const text =
       message.content[0].type === "text" ? message.content[0].text : "";
-    const parsed = JSON.parse(text) as ClaudeCredibility;
+    // Extract JSON even if wrapped in markdown code fences
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return null;
+    const parsed = JSON.parse(jsonMatch[0]) as ClaudeCredibility;
 
     if (parsed.composite == null) return null;
     return parsed;
@@ -208,28 +223,35 @@ async function main() {
     console.error(
       "❌ No valid KOL handles found. Edit kol-handles.json first!"
     );
-    console.error(
-      '   Replace "REPLACE_WITH_REAL_HANDLE_X" with actual Twitter handles.'
-    );
     process.exit(1);
   }
 
   console.log(`\n🔍 A/B Test: Collecting scores for ${valid.length} KOLs\n`);
 
+  // Check XClaw API key
+  const xclawKey = process.env.XCLAW_API_KEY;
+  if (!xclawKey) {
+    console.error("❌ XCLAW_API_KEY not found in .env");
+    console.error("   Add XCLAW_API_KEY=your_key to .env file");
+    process.exit(1);
+  }
+  console.log("✅ XClaw API key found — Option A enabled");
+
   // Init Claude client (only if API key exists)
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY;
   let anthropic: Anthropic | null = null;
-  if (apiKey) {
-    anthropic = new Anthropic({ apiKey });
+  if (anthropicKey) {
+    anthropic = new Anthropic({ apiKey: anthropicKey });
     console.log("✅ Claude API key found — Option B enabled");
   } else {
     console.log(
       "⚠️  No ANTHROPIC_API_KEY — Option B (Claude) will be skipped"
     );
-    console.log(
-      "   Set it with: ANTHROPIC_API_KEY=sk-... npx tsx collect.ts\n"
-    );
   }
+
+  // Estimate credits: 1.1 per KOL (soul_index=1 + profile=0.1)
+  const estimatedCredits = valid.length * 1.1;
+  console.log(`\n📊 Estimated XClaw credits: ~${estimatedCredits.toFixed(1)} credits for ${valid.length} KOLs`);
 
   const results: CollectResult[] = [];
 
@@ -239,7 +261,7 @@ async function main() {
       `\n[${i + 1}/${valid.length}] @${kol.handle} (actual: $${kol.actual_price_usd})`
     );
 
-    // Fetch profile
+    // Fetch profile via XClaw (0.1 credit)
     console.log("  📋 Fetching profile...");
     const profile = await fetchProfile(kol.handle);
     if (profile) {
@@ -250,8 +272,8 @@ async function main() {
       console.log("  ⚠️  Profile not found, continuing with limited data");
     }
 
-    // Option A: XHunt Soul Score
-    console.log("  🅰️  Fetching XHunt Soul Score...");
+    // Option A: XClaw Soul Index (1 credit)
+    console.log("  🅰️  Fetching XClaw Soul Index...");
     const soulData = await fetchOptionA(kol.handle);
     const optionA = {
       raw_score: soulData?.score ?? null,
@@ -270,7 +292,7 @@ async function main() {
     if (soulData) {
       console.log(`  ✅ Soul Score: ${soulData.score}/100`);
     } else {
-      console.log("  ⚠️  XHunt data unavailable (using neutral: 50)");
+      console.log("  ⚠️  Soul Index unavailable (using neutral: 50)");
     }
 
     // Option B: Claude Credibility Score
@@ -312,9 +334,10 @@ async function main() {
       collected_at: new Date().toISOString(),
     });
 
-    // Rate limit pause between requests
+    // Rate limit pause (10 req/min for profile endpoint = 6s between requests)
     if (i < valid.length - 1) {
-      await new Promise((r) => setTimeout(r, 1500));
+      console.log("  ⏳ Waiting 6s (rate limit)...");
+      await new Promise((r) => setTimeout(r, 6000));
     }
   }
 
