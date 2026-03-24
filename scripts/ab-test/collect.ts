@@ -77,6 +77,7 @@ interface CollectResult {
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 const XCLAW_API_BASE = "https://pro.xclaw.info";
+const XHUNT_API_BASE = "https://kb.cryptohunt.ai/api/xhunt/proxy/public";
 const XCLAW_TIMEOUT_MS = 30_000;
 
 // ─── XHunt Score Mapping (same as KOL-Pricer) ───────────────────────────────
@@ -104,6 +105,7 @@ function getXClawHeaders(): Record<string, string> {
 // ─── Step 1: Fetch Twitter profile via XClaw API ─────────────────────────────
 
 async function fetchProfile(handle: string): Promise<TwitterProfile | null> {
+  // Try XClaw first
   try {
     const resp = await axios.post(
       `${XCLAW_API_BASE}/user/profile_by_handle`,
@@ -111,31 +113,55 @@ async function fetchProfile(handle: string): Promise<TwitterProfile | null> {
       { headers: getXClawHeaders(), timeout: XCLAW_TIMEOUT_MS }
     );
     const data = resp.data;
-    if (!data) return null;
-
-    // Extract profile data (adapt to actual response structure)
-    const profile = data.data || data.result || data;
-    return {
-      username: profile.username || profile.screen_name || handle,
-      name: profile.name || "",
-      description: profile.description || profile.bio || "",
-      followers_count: profile.followers_count ?? profile.public_metrics?.followers_count ?? 0,
-      following_count: profile.following_count ?? profile.public_metrics?.following_count ?? 0,
-      tweet_count: profile.tweet_count ?? profile.statuses_count ?? profile.public_metrics?.tweet_count ?? 0,
-      created_at: profile.created_at || "",
-      is_blue_verified: profile.is_blue_verified ?? profile.verified ?? false,
-      classification: profile.classification || profile.ai?.classification || "",
-      isKol: profile.isKol ?? profile.is_kol ?? false,
-    };
+    if (data) {
+      const profile = data.data || data.result || data;
+      return extractProfile(profile, handle);
+    }
   } catch (err) {
-    console.warn(`  [Profile] Failed for @${handle}:`, (err as Error).message);
-    return null;
+    console.warn(`  [Profile] XClaw failed: ${(err as Error).message}, trying XHunt fallback...`);
   }
+
+  // Fallback: XHunt public API
+  try {
+    const resp = await axios.post(
+      `${XHUNT_API_BASE}/pro/api/profile?target=k8s_kota`,
+      { handle: handle.toLowerCase() },
+      { headers: { "Content-Type": "application/json" }, timeout: 15_000 }
+    );
+    const data = resp.data;
+    if (data) {
+      const profile = data.data || data.result || data;
+      return extractProfile(profile, handle);
+    }
+  } catch (err) {
+    console.warn(`  [Profile] XHunt fallback also failed: ${(err as Error).message}`);
+  }
+
+  return null;
 }
 
-// ─── Step 2: Option A — XClaw Soul Index ─────────────────────────────────────
+function extractProfile(profile: Record<string, unknown>, handle: string): TwitterProfile {
+  const pm = profile.public_metrics as Record<string, number> | undefined;
+  const ai = profile.ai as Record<string, string> | undefined;
+  return {
+    username: (profile.username || profile.screen_name || handle) as string,
+    name: (profile.name || "") as string,
+    description: (profile.description || profile.bio || "") as string,
+    followers_count: (profile.followers_count ?? pm?.followers_count ?? 0) as number,
+    following_count: (profile.following_count ?? pm?.following_count ?? 0) as number,
+    tweet_count: (profile.tweet_count ?? profile.statuses_count ?? pm?.tweet_count ?? 0) as number,
+    created_at: (profile.created_at || "") as string,
+    is_blue_verified: (profile.is_blue_verified ?? profile.verified ?? false) as boolean,
+    classification: (profile.classification || ai?.classification || "") as string,
+    isKol: (profile.isKol ?? profile.is_kol ?? false) as boolean,
+  };
+}
+
+// ─── Step 2: Option A — XHunt Soul Index ────────────────────────────────────
+// Try XClaw first, fallback to XHunt public API
 
 async function fetchOptionA(handle: string): Promise<SoulIndexData | null> {
+  // Try XClaw API first
   try {
     const resp = await axios.post(
       `${XCLAW_API_BASE}/ai/soul_index`,
@@ -143,12 +169,25 @@ async function fetchOptionA(handle: string): Promise<SoulIndexData | null> {
       { headers: getXClawHeaders(), timeout: XCLAW_TIMEOUT_MS }
     );
     const data = resp.data;
-    // Handle nested response structures
+    const result = data?.data || data?.result || data;
+    if (result && result.score != null) return result as SoulIndexData;
+  } catch (err) {
+    console.warn(`  [Option A] XClaw failed: ${(err as Error).message}, trying XHunt fallback...`);
+  }
+
+  // Fallback: XHunt public API (same as kol-pricer uses)
+  try {
+    const resp = await axios.post(
+      `${XHUNT_API_BASE}/pro/api/soul?target=k8s_kota`,
+      { handle: handle.toLowerCase() },
+      { headers: { "Content-Type": "application/json" }, timeout: 15_000 }
+    );
+    const data = resp.data;
     const result = data?.data || data?.result || data;
     if (result && result.score != null) return result as SoulIndexData;
     return null;
   } catch (err) {
-    console.warn(`  [Option A] Failed for @${handle}:`, (err as Error).message);
+    console.warn(`  [Option A] XHunt fallback also failed: ${(err as Error).message}`);
     return null;
   }
 }

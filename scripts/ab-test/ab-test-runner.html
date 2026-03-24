@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>KOL Pricing A/B Test: XClaw vs Claude</title>
+<title>KOL 6th Factor A/B Test: XHunt Soul Score vs Claude Credibility</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e0e0e0; padding: 24px; }
@@ -10,63 +10,75 @@
   .subtitle { color: #888; margin-bottom: 24px; }
   .config { background: #1a1d27; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
   .config h3 { color: #00d4aa; margin-bottom: 12px; }
-  .row { display: flex; gap: 12px; margin-bottom: 12px; }
+  .row { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end; }
   label { display: block; color: #aaa; font-size: 13px; margin-bottom: 4px; }
   input, textarea { background: #252830; border: 1px solid #333; color: #fff; border-radius: 8px; padding: 10px 12px; width: 100%; font-family: monospace; font-size: 13px; }
   input:focus, textarea:focus { outline: none; border-color: #00d4aa; }
-  textarea { height: 120px; resize: vertical; }
   button { background: #00d4aa; color: #0f1117; border: none; border-radius: 8px; padding: 12px 24px; font-size: 15px; font-weight: 600; cursor: pointer; }
   button:hover { background: #00b894; }
   button:disabled { background: #333; color: #666; cursor: not-allowed; }
-  #log { background: #0a0c10; border-radius: 12px; padding: 16px; margin-top: 20px; max-height: 400px; overflow-y: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
+  .btn-secondary { background: #252830; color: #00d4aa; }
+  .btn-secondary:hover { background: #333; }
+  #log { background: #0a0c10; border-radius: 12px; padding: 16px; margin-top: 20px; max-height: 500px; overflow-y: auto; font-family: monospace; font-size: 13px; line-height: 1.6; white-space: pre-wrap; }
   .log-info { color: #888; }
   .log-success { color: #00d4aa; }
   .log-error { color: #ff6b6b; }
   .log-score { color: #ffd93d; }
   #results { margin-top: 20px; }
-  table { width: 100%; border-collapse: collapse; background: #1a1d27; border-radius: 12px; overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; background: #1a1d27; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
   th { background: #252830; color: #00d4aa; padding: 12px; text-align: left; font-size: 13px; }
   td { padding: 10px 12px; border-top: 1px solid #252830; font-size: 13px; }
-  .winner { background: #00d4aa22; }
+  .winner-row { background: #00d4aa15; }
+  .loser-row { background: #ff6b6b10; }
   .summary { background: #1a1d27; border-radius: 12px; padding: 20px; margin-top: 20px; }
   .summary h3 { color: #ffd93d; margin-bottom: 12px; }
   .metric { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #252830; }
   .metric:last-child { border-bottom: none; }
   .better { color: #00d4aa; font-weight: 600; }
   .worse { color: #ff6b6b; }
-  .note { background: #ffd93d22; border: 1px solid #ffd93d44; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #ffd93d; font-size: 13px; }
+  .note { background: #ffd93d22; border: 1px solid #ffd93d44; border-radius: 8px; padding: 12px; margin-bottom: 16px; color: #ffd93d; font-size: 13px; line-height: 1.6; }
+  .tag-a { background: #3b82f620; color: #60a5fa; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .tag-b { background: #a855f720; color: #c084fc; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; }
 </style>
 </head>
 <body>
 
-<h1>KOL Pricing A/B Test</h1>
-<p class="subtitle">Option A: XClaw Soul Index vs Option B: Claude Credibility Score</p>
+<h1>KOL 6th Factor A/B Test</h1>
+<p class="subtitle">
+  <span class="tag-a">A: XHunt Soul Score</span> vs <span class="tag-b">B: Claude Credibility Score</span>
+  — 6번째 scoring factor로 어느 것이 실제 가격에 더 가까운가?
+</p>
 
 <div class="note">
-  API 키를 입력하고 "Run Test" 버튼을 누르면 5명의 KOL에 대해 두 가지 스코어를 수집하고 비교합니다.
-  <br>예상 비용: XClaw ~6 credits (무료), Claude ~$0.03
+  <strong>목적:</strong> 현재 5개 scoring 차원 (Follower Scale, Follower Quality, Update Stability, Impression Stability, Engagement Rate)에
+  <strong>6번째 factor</strong>를 추가할 때, XHunt Soul Score와 Claude AI 분석 중 어느 것이 실제 시장 가격에 더 가까운 결과를 내는지 비교합니다.<br>
+  <strong>대상:</strong> 5명의 KOL (실제 가격 기준)<br>
+  <strong>비용:</strong> XClaw ~6 credits, Claude ~$0.05
 </div>
 
 <div class="config">
   <h3>API Keys</h3>
   <div class="row">
     <div style="flex:1">
-      <label>XClaw API Key</label>
+      <label>XClaw API Key (for XHunt Soul Score + Profile)</label>
       <input type="password" id="xclawKey" placeholder="ccb3cbf9-..." />
     </div>
     <div style="flex:1">
-      <label>Anthropic API Key (Optional - for Option B)</label>
+      <label>Anthropic API Key (for Claude Credibility Score)</label>
       <input type="password" id="anthropicKey" placeholder="sk-ant-api03-..." />
     </div>
   </div>
-  <button id="runBtn" onclick="runTest()">Run Test</button>
-  <button onclick="exportResults()" style="background:#252830;color:#00d4aa;margin-left:8px">Export JSON</button>
+  <div style="display:flex;gap:8px;">
+    <button id="runBtn" onclick="runTest()">Run A/B Test</button>
+    <button class="btn-secondary" onclick="exportResults()">Export JSON</button>
+  </div>
 </div>
 
 <div id="log"></div>
 <div id="results"></div>
 
 <script>
+// ===== 5 KOLs with actual market prices =====
 const KOL_LIST = [
   { handle: "one_snowball", actual_price_usd: 300, category: "crypto", notes: "snowball - Binance KOL, 75K" },
   { handle: "BTC_Alert_", actual_price_usd: 1500, category: "crypto", notes: "Alert 的会所 - High-tier CN KOL" },
@@ -75,7 +87,22 @@ const KOL_LIST = [
   { handle: "0xBeyondLee", actual_price_usd: 1000, category: "crypto", notes: "Beyond - CN Crypto KOL" },
 ];
 
+// ===== API endpoints =====
 const XCLAW_BASE = "https://pro.xclaw.info";
+const XHUNT_BASE = "https://kb.cryptohunt.ai/api/xhunt/proxy/public";
+
+// ===== KOL-Pricer scoring formula (replicated) =====
+const SCORE_WEIGHTS = {
+  followerScale: 0.17,
+  followerQuality: 0.22,
+  updateStability: 0.13,
+  impressionStability: 0.17,
+  engagementRate: 0.16,
+  sixthFactor: 0.15,  // This is what we're A/B testing
+};
+const DOMAIN_MULT = { crypto: 1.4, tech: 1.3, finance: 1.4, business: 1.2, entertainment: 1.0, other: 1.0 };
+const BASE_CPM = 10, MAX_CPM_BONUS = 90;
+
 let allResults = [];
 
 function log(msg, type = "info") {
@@ -87,23 +114,71 @@ function log(msg, type = "info") {
   el.scrollTop = el.scrollHeight;
 }
 
-async function xclaw(endpoint, body, apiKey) {
-  const resp = await fetch(`${XCLAW_BASE}${endpoint}`, {
-    method: "POST",
-    headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!resp.ok) throw new Error(`XClaw ${resp.status}: ${resp.statusText}`);
-  return resp.json();
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ===== API Helpers =====
+
+async function fetchWithFallback(xclawEndpoint, xhuntEndpoint, body, apiKey) {
+  // Try XClaw first
+  try {
+    const resp = await fetch(`${XCLAW_BASE}${xclawEndpoint}`, {
+      method: "POST",
+      headers: { "X-API-KEY": apiKey, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      return data?.data || data?.result || data;
+    }
+    log(`    XClaw ${resp.status}, trying XHunt fallback...`, "info");
+  } catch (e) {
+    log(`    XClaw failed: ${e.message}, trying XHunt fallback...`, "info");
+  }
+
+  // Fallback: XHunt public API
+  if (xhuntEndpoint) {
+    try {
+      const resp = await fetch(`${XHUNT_BASE}${xhuntEndpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        return data?.data || data?.result || data;
+      }
+    } catch (e) {
+      // silent
+    }
+  }
+  return null;
 }
 
-async function claudeScore(handle, profile, apiKey) {
+async function fetchProfile(handle, apiKey) {
+  return fetchWithFallback(
+    "/user/profile_by_handle",
+    "/pro/api/profile?target=k8s_kota",
+    { handle: handle.toLowerCase() },
+    apiKey
+  );
+}
+
+async function fetchSoulScore(handle, apiKey) {
+  return fetchWithFallback(
+    "/ai/soul_index",
+    "/pro/api/soul?target=k8s_kota",
+    { handle: handle.toLowerCase() },
+    apiKey
+  );
+}
+
+async function fetchClaudeScore(handle, profile, apiKey) {
   const prompt = `You are an expert crypto KOL credibility analyst. Given the following Twitter account data, assess the KOL's credibility for paid promotions.
 
 Account: @${handle}
-Name: ${profile.name}
-Followers: ${profile.followers_count?.toLocaleString() || "N/A"} | Following: ${profile.following_count?.toLocaleString() || "N/A"}
-Tweets: ${profile.tweet_count?.toLocaleString() || "N/A"} | Account created: ${profile.created_at || "N/A"}
+Name: ${profile.name || "N/A"}
+Followers: ${(profile.followers_count || 0).toLocaleString()} | Following: ${(profile.following_count || 0).toLocaleString()}
+Tweets: ${(profile.tweet_count || 0).toLocaleString()} | Account created: ${profile.created_at || "N/A"}
 Bio: ${profile.description || "N/A"}
 Verified: ${profile.is_blue_verified || false}
 
@@ -142,7 +217,8 @@ Evaluate and respond ONLY in this exact JSON format, no other text:
   return JSON.parse(match[0]);
 }
 
-function mapScore(raw) {
+// ===== Score mapping (same as KOL-Pricer) =====
+function mapSoulScore(raw) {
   if (raw == null) return 50;
   if (raw >= 80) return 100;
   if (raw >= 60) return 80;
@@ -151,200 +227,276 @@ function mapScore(raw) {
   return 20;
 }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+// Map Claude composite to same 0-100 scale
+function mapClaudeScore(composite) {
+  if (composite == null) return 50;
+  // Claude already returns 0-100, use same mapping as soul score for fair comparison
+  if (composite >= 80) return 100;
+  if (composite >= 60) return 80;
+  if (composite >= 40) return 60;
+  if (composite >= 20) return 40;
+  return 20;
+}
 
+// ===== Price estimation =====
+// Since we don't have tweet-level data, we use:
+// - 5 base dimensions at baseline score of 60 (reasonable average)
+// - 6th factor varies between Option A (XHunt) and Option B (Claude)
+// - Avg impressions estimated as followers * 0.02
+function estimatePrice(sixthFactorScore, followers, domain) {
+  const baseline = 60; // average for other 5 dimensions
+  const otherWeight = SCORE_WEIGHTS.followerScale + SCORE_WEIGHTS.followerQuality +
+    SCORE_WEIGHTS.updateStability + SCORE_WEIGHTS.impressionStability + SCORE_WEIGHTS.engagementRate;
+
+  const overall = baseline * otherWeight + sixthFactorScore * SCORE_WEIGHTS.sixthFactor;
+  const cpm = BASE_CPM + (overall / 100) * MAX_CPM_BONUS;
+  const avgImpressions = followers * 0.02;
+  const mult = DOMAIN_MULT[domain] || 1.0;
+  const price = (cpm * avgImpressions * mult) / 1000;
+
+  return {
+    overall: Math.round(overall * 10) / 10,
+    cpm: Math.round(cpm * 100) / 100,
+    price: Math.round(price),
+    priceMin: Math.round(price * 0.8),
+    priceMax: Math.round(price * 1.2),
+  };
+}
+
+// ===== Run Test =====
 async function runTest() {
   const xclawKey = document.getElementById("xclawKey").value.trim();
   const anthropicKey = document.getElementById("anthropicKey").value.trim();
-  if (!xclawKey) { alert("XClaw API Key를 입력하세요"); return; }
+
+  if (!xclawKey && !anthropicKey) {
+    alert("최소 하나의 API Key를 입력하세요");
+    return;
+  }
 
   document.getElementById("log").innerHTML = "";
   document.getElementById("results").innerHTML = "";
   document.getElementById("runBtn").disabled = true;
   allResults = [];
 
-  log("🔍 A/B Test 시작: " + KOL_LIST.length + "명의 KOL\n", "success");
-  log("✅ XClaw API key 확인됨 — Option A 활성화", "success");
-  if (anthropicKey) {
-    log("✅ Claude API key 확인됨 — Option B 활성화", "success");
-  } else {
-    log("⚠️  Claude API key 없음 — Option B 스킵", "error");
-  }
+  log("=== 6th Factor A/B Test 시작 ===", "success");
+  log(`대상: ${KOL_LIST.length}명의 KOL\n`);
+
+  if (xclawKey) log("Option A (XHunt Soul Score): 활성화", "success");
+  else log("Option A (XHunt Soul Score): API 키 없음 — 스킵", "error");
+
+  if (anthropicKey) log("Option B (Claude Credibility): 활성화", "success");
+  else log("Option B (Claude Credibility): API 키 없음 — 스킵", "error");
   log("");
 
   for (let i = 0; i < KOL_LIST.length; i++) {
     const kol = KOL_LIST[i];
-    log(`[${i+1}/${KOL_LIST.length}] @${kol.handle} (실제 가격: $${kol.actual_price_usd})`);
+    log(`[${i+1}/${KOL_LIST.length}] @${kol.handle} (실제 가격: $${kol.actual_price_usd})`, "info");
 
     let profile = null;
     let optionA = { raw_score: null, mapped_score: 50, sub_dimensions: null, reason_en: null };
-    let optionB = { composite: null, sub_dimensions: null, reasoning: null };
+    let optionB = { raw_score: null, mapped_score: 50, sub_dimensions: null, reasoning: null };
 
-    // Profile
-    try {
-      log("  📋 프로필 조회 중...");
-      const profileResp = await xclaw("/user/profile_by_handle", { handle: kol.handle.toLowerCase() }, xclawKey);
-      profile = profileResp.data || profileResp.result || profileResp;
-      const fc = profile.followers_count || profile.public_metrics?.followers_count || 0;
-      log(`  ✅ ${profile.name || kol.handle} — ${fc.toLocaleString()} followers`, "success");
-    } catch (e) {
-      log(`  ⚠️  프로필 조회 실패: ${e.message}`, "error");
-    }
-
-    // Option A: Soul Index
-    try {
-      log("  🅰️  XClaw Soul Index 조회 중...");
-      const soulResp = await xclaw("/ai/soul_index", { handle: kol.handle.toLowerCase() }, xclawKey);
-      const soul = soulResp.data || soulResp.result || soulResp;
-      if (soul && soul.score != null) {
-        optionA = {
-          raw_score: soul.score,
-          mapped_score: mapScore(soul.score),
-          sub_dimensions: {
-            content_analysis: soul.content_analysis,
-            engagement_analysis: soul.engagement_analysis,
-            kol_interaction: soul.kol_interaction,
-            profile_analysis: soul.profile_analysis,
-            xhunt_analysis: soul.xhunt_analysis,
-          },
-          reason_en: soul.reason_en || null,
-        };
-        log(`  ✅ Soul Score: ${soul.score}/100`, "score");
-      } else {
-        log("  ⚠️  Soul Index 데이터 없음 (neutral: 50)", "error");
-      }
-    } catch (e) {
-      log(`  ⚠️  Soul Index 실패: ${e.message}`, "error");
-    }
-
-    // Option B: Claude
-    if (anthropicKey && profile) {
+    // Fetch profile
+    if (xclawKey) {
       try {
-        log("  🅱️  Claude Credibility Score 조회 중...");
-        const claude = await claudeScore(kol.handle, profile, anthropicKey);
-        optionB = {
-          composite: claude.composite,
-          sub_dimensions: {
-            authenticity: claude.authenticity,
-            content_quality: claude.content_quality,
-            engagement_legitimacy: claude.engagement_legitimacy,
-            influence_credibility: claude.influence_credibility,
-          },
-          reasoning: claude.reasoning,
-        };
-        log(`  ✅ Claude Score: ${claude.composite}/100 — ${claude.reasoning}`, "score");
+        log("  📋 프로필 조회 중...");
+        profile = await fetchProfile(kol.handle, xclawKey);
+        if (profile) {
+          const fc = profile.followers_count || profile.public_metrics?.followers_count || 0;
+          log(`  ✅ ${profile.name || kol.handle} — ${fc.toLocaleString()} followers`, "success");
+        } else {
+          log("  ⚠️ 프로필 조회 실패", "error");
+        }
       } catch (e) {
-        log(`  ⚠️  Claude 실패: ${e.message}`, "error");
+        log(`  ⚠️ 프로필 에러: ${e.message}`, "error");
       }
     }
 
-    allResults.push({ handle: kol.handle, actual_price_usd: kol.actual_price_usd, category: kol.category, notes: kol.notes, profile, optionA, optionB, collected_at: new Date().toISOString() });
+    // Option A: XHunt Soul Score
+    if (xclawKey) {
+      try {
+        log("  🅰️ XHunt Soul Index 조회 중...");
+        const soul = await fetchSoulScore(kol.handle, xclawKey);
+        if (soul && soul.score != null) {
+          optionA = {
+            raw_score: soul.score,
+            mapped_score: mapSoulScore(soul.score),
+            sub_dimensions: {
+              content_analysis: soul.content_analysis,
+              engagement_analysis: soul.engagement_analysis,
+              kol_interaction: soul.kol_interaction,
+              profile_analysis: soul.profile_analysis,
+              xhunt_analysis: soul.xhunt_analysis,
+            },
+            reason_en: soul.reason_en || null,
+          };
+          log(`  ✅ Soul Score: ${soul.score}/100 → mapped: ${optionA.mapped_score}`, "score");
+        } else {
+          log("  ⚠️ Soul Index 데이터 없음 (neutral: 50)", "error");
+        }
+      } catch (e) {
+        log(`  ⚠️ Soul Index 에러: ${e.message}`, "error");
+      }
+    }
+
+    // Option B: Claude Credibility
+    if (anthropicKey) {
+      try {
+        // If no profile from XClaw, create minimal profile for Claude
+        const profileForClaude = profile || {
+          name: kol.handle,
+          followers_count: 0,
+          following_count: 0,
+          tweet_count: 0,
+          created_at: "N/A",
+          description: kol.notes || "",
+          is_blue_verified: false,
+        };
+
+        log("  🅱️ Claude Credibility Score 조회 중...");
+        const claude = await fetchClaudeScore(kol.handle, profileForClaude, anthropicKey);
+        if (claude && claude.composite != null) {
+          optionB = {
+            raw_score: claude.composite,
+            mapped_score: mapClaudeScore(claude.composite),
+            sub_dimensions: {
+              authenticity: claude.authenticity,
+              content_quality: claude.content_quality,
+              engagement_legitimacy: claude.engagement_legitimacy,
+              influence_credibility: claude.influence_credibility,
+            },
+            reasoning: claude.reasoning,
+          };
+          log(`  ✅ Claude Score: ${claude.composite}/100 → mapped: ${optionB.mapped_score}`, "score");
+          if (claude.reasoning) log(`     "${claude.reasoning}"`, "info");
+        } else {
+          log("  ⚠️ Claude 결과 없음", "error");
+        }
+      } catch (e) {
+        log(`  ⚠️ Claude 에러: ${e.message}`, "error");
+      }
+    }
+
+    const followers = profile?.followers_count || profile?.public_metrics?.followers_count || 10000;
+
+    allResults.push({
+      handle: kol.handle,
+      actual_price_usd: kol.actual_price_usd,
+      category: kol.category,
+      notes: kol.notes,
+      followers,
+      profile,
+      optionA,
+      optionB,
+      collected_at: new Date().toISOString(),
+    });
 
     if (i < KOL_LIST.length - 1) {
-      log("  ⏳ 6초 대기 (rate limit)...\n");
-      await sleep(6000);
+      log("  ⏳ 4초 대기...\n");
+      await sleep(4000);
     }
   }
 
-  log("\n✅ 데이터 수집 완료!", "success");
+  log("\n=== 데이터 수집 완료! 결과 분석 중... ===\n", "success");
   renderResults();
   document.getElementById("runBtn").disabled = false;
 }
 
+// ===== Render Results =====
 function renderResults() {
-  // Pricing formula
-  const WEIGHTS = { other: 0.85, xclaw: 0.15 };
-  const BASE_CPM = 10, MAX_BONUS = 90;
-  const DOMAIN_MULT = { crypto: 1.4, tech: 1.3, finance: 1.4, business: 1.2, entertainment: 1.0, other: 1.0 };
+  const hasA = allResults.some(r => r.optionA.raw_score != null);
+  const hasB = allResults.some(r => r.optionB.raw_score != null);
 
-  function estimatePrice(credScore, followers, domain) {
-    const baseline = 60;
-    const overall = baseline * 0.85 + credScore * 0.15;
-    const cpm = BASE_CPM + (overall / 100) * MAX_BONUS;
-    const impressions = followers * 0.02;
-    const mult = DOMAIN_MULT[domain] || 1.0;
-    const price = (cpm * impressions * mult) / 1000;
-    return { price: Math.round(price), min: Math.round(price * 0.8), max: Math.round(price * 1.2) };
-  }
+  // Per-KOL table
+  let html = '<h3 style="color:#00d4aa;margin-bottom:12px">KOL별 비교</h3>';
+  html += `<table><tr>
+    <th>KOL</th><th>Followers</th><th>실제 가격</th>
+    <th><span class="tag-a">A</span> Score</th><th><span class="tag-a">A</span> 예상가</th><th><span class="tag-a">A</span> 오차</th>
+    <th><span class="tag-b">B</span> Score</th><th><span class="tag-b">B</span> 예상가</th><th><span class="tag-b">B</span> 오차</th>
+    <th>승자</th>
+  </tr>`;
 
-  let html = '<table><tr><th>KOL</th><th>실제 가격</th><th>A: Soul Score</th><th>A: 예상가</th><th>B: Claude</th><th>B: 예상가</th><th>A 오차</th><th>B 오차</th></tr>';
-
-  let aErrors = [], bErrors = [], aScores = [], bScores = [], actualPrices = [];
-  let aHits = 0, bHits = 0, bCount = 0;
+  let aErrors = [], bErrors = [], aPrices = [], bPrices = [], actualPrices = [];
+  let aHits = 0, bHits = 0, aWinCount = 0, bWinCount = 0;
 
   for (const r of allResults) {
-    const fc = r.profile?.followers_count || r.profile?.public_metrics?.followers_count || 10000;
+    const fc = r.followers;
     const aPrice = estimatePrice(r.optionA.mapped_score, fc, r.category);
-    const bMapped = r.optionB.composite != null ? r.optionB.composite : 50;
-    const bPrice = estimatePrice(bMapped, fc, r.category);
+    const bPrice = estimatePrice(r.optionB.mapped_score, fc, r.category);
 
     const aErr = Math.abs(aPrice.price - r.actual_price_usd);
-    aErrors.push(aErr);
-    aScores.push(r.optionA.mapped_score);
+    const bErr = Math.abs(bPrice.price - r.actual_price_usd);
+    const aErrPct = r.actual_price_usd > 0 ? (aErr / r.actual_price_usd * 100).toFixed(0) : "N/A";
+    const bErrPct = r.actual_price_usd > 0 ? (bErr / r.actual_price_usd * 100).toFixed(0) : "N/A";
+
+    aErrors.push(aErr); bErrors.push(bErr);
+    aPrices.push(aPrice.price); bPrices.push(bPrice.price);
     actualPrices.push(r.actual_price_usd);
-    if (r.actual_price_usd >= aPrice.min && r.actual_price_usd <= aPrice.max) aHits++;
+    if (r.actual_price_usd >= aPrice.priceMin && r.actual_price_usd <= aPrice.priceMax) aHits++;
+    if (r.actual_price_usd >= bPrice.priceMin && r.actual_price_usd <= bPrice.priceMax) bHits++;
 
-    let bErrStr = "N/A", bScoreStr = "N/A", bPriceStr = "N/A";
-    if (r.optionB.composite != null) {
-      const bErr = Math.abs(bPrice.price - r.actual_price_usd);
-      bErrors.push(bErr);
-      bScores.push(bMapped);
-      bCount++;
-      if (r.actual_price_usd >= bPrice.min && r.actual_price_usd <= bPrice.max) bHits++;
-      bErrStr = `$${bErr}`;
-      bScoreStr = `${r.optionB.composite}`;
-      bPriceStr = `$${bPrice.price}`;
-    }
+    let winner = "", rowClass = "";
+    if (aErr < bErr) { winner = '<span class="tag-a">A 승</span>'; aWinCount++; rowClass = ""; }
+    else if (bErr < aErr) { winner = '<span class="tag-b">B 승</span>'; bWinCount++; rowClass = ""; }
+    else { winner = "무승부"; }
 
-    html += `<tr>
-      <td>@${r.handle}</td>
-      <td>$${r.actual_price_usd}</td>
-      <td>${r.optionA.raw_score ?? "N/A"} (${r.optionA.mapped_score})</td>
-      <td>$${aPrice.price}</td>
+    const aScoreStr = r.optionA.raw_score != null ? `${r.optionA.raw_score} (→${r.optionA.mapped_score})` : `N/A (→50)`;
+    const bScoreStr = r.optionB.raw_score != null ? `${r.optionB.raw_score} (→${r.optionB.mapped_score})` : `N/A (→50)`;
+
+    html += `<tr class="${rowClass}">
+      <td><strong>@${r.handle}</strong></td>
+      <td>${fc.toLocaleString()}</td>
+      <td style="color:#ffd93d;font-weight:600">$${r.actual_price_usd.toLocaleString()}</td>
+      <td>${aScoreStr}</td>
+      <td>$${aPrice.price.toLocaleString()}</td>
+      <td style="color:${aErr < bErr ? '#00d4aa' : '#ff6b6b'}">$${aErr.toLocaleString()} (${aErrPct}%)</td>
       <td>${bScoreStr}</td>
-      <td>${bPriceStr}</td>
-      <td>$${aErr}</td>
-      <td>${bErrStr}</td>
+      <td>$${bPrice.price.toLocaleString()}</td>
+      <td style="color:${bErr < aErr ? '#00d4aa' : '#ff6b6b'}">$${bErr.toLocaleString()} (${bErrPct}%)</td>
+      <td>${winner}</td>
     </tr>`;
   }
   html += '</table>';
 
-  // Stats
-  const aMae = aErrors.reduce((a,b) => a+b, 0) / aErrors.length;
-  const aHitRate = (aHits / allResults.length * 100);
-  const aCorr = pearson(aScores, actualPrices);
+  // Summary statistics
+  const n = allResults.length;
+  const aMae = aErrors.reduce((a,b) => a+b, 0) / n;
+  const bMae = bErrors.reduce((a,b) => a+b, 0) / n;
+  const aMape = actualPrices.reduce((sum, a, i) => sum + Math.abs((aPrices[i]-a)/a), 0) / n * 100;
+  const bMape = actualPrices.reduce((sum, a, i) => sum + Math.abs((bPrices[i]-a)/a), 0) / n * 100;
+  const aCorr = pearson(aPrices, actualPrices);
+  const bCorr = pearson(bPrices, actualPrices);
+  const aHitRate = (aHits / n * 100);
+  const bHitRate = (bHits / n * 100);
 
-  let summaryHtml = `<div class="summary"><h3>📊 비교 결과 (N=${allResults.length})</h3>`;
-  summaryHtml += `<div class="metric"><span>🅰️ Option A (XClaw Soul Index)</span></div>`;
-  summaryHtml += `<div class="metric"><span>  MAE (평균 오차)</span><span>$${aMae.toFixed(0)}</span></div>`;
-  summaryHtml += `<div class="metric"><span>  상관계수</span><span>${aCorr.toFixed(3)}</span></div>`;
-  summaryHtml += `<div class="metric"><span>  가격범위 적중률</span><span>${aHitRate.toFixed(1)}%</span></div>`;
+  let summary = `<div class="summary"><h3>📊 A/B Test 결과 요약 (N=${n})</h3>`;
 
-  if (bCount > 0) {
-    const bMae = bErrors.reduce((a,b) => a+b, 0) / bErrors.length;
-    const bHitRate = (bHits / bCount * 100);
-    const bCorr = pearson(bScores, actualPrices.slice(0, bCount));
+  summary += `<table style="margin-top:12px">
+    <tr><th>지표</th><th><span class="tag-a">A: XHunt Soul Score</span></th><th><span class="tag-b">B: Claude Credibility</span></th><th>승자</th></tr>
+    <tr><td>MAE (평균절대오차)</td><td>$${aMae.toFixed(0)}</td><td>$${bMae.toFixed(0)}</td><td>${aMae < bMae ? '<span class="tag-a">A</span>' : aMae > bMae ? '<span class="tag-b">B</span>' : '무승부'}</td></tr>
+    <tr><td>MAPE (평균오차%)</td><td>${aMape.toFixed(1)}%</td><td>${bMape.toFixed(1)}%</td><td>${aMape < bMape ? '<span class="tag-a">A</span>' : aMape > bMape ? '<span class="tag-b">B</span>' : '무승부'}</td></tr>
+    <tr><td>상관계수 (예상가↔실제가)</td><td>${aCorr.toFixed(3)}</td><td>${bCorr.toFixed(3)}</td><td>${aCorr > bCorr ? '<span class="tag-a">A</span>' : aCorr < bCorr ? '<span class="tag-b">B</span>' : '무승부'}</td></tr>
+    <tr><td>가격범위(±20%) 적중률</td><td>${aHitRate.toFixed(0)}% (${aHits}/${n})</td><td>${bHitRate.toFixed(0)}% (${bHits}/${n})</td><td>${aHitRate > bHitRate ? '<span class="tag-a">A</span>' : aHitRate < bHitRate ? '<span class="tag-b">B</span>' : '무승부'}</td></tr>
+    <tr><td>KOL별 승수</td><td>${aWinCount}승</td><td>${bWinCount}승</td><td>${aWinCount > bWinCount ? '<span class="tag-a">A</span>' : aWinCount < bWinCount ? '<span class="tag-b">B</span>' : '무승부'}</td></tr>
+  </table>`;
 
-    summaryHtml += `<div class="metric" style="margin-top:12px"><span>🅱️ Option B (Claude Credibility)</span></div>`;
-    summaryHtml += `<div class="metric"><span>  MAE (평균 오차)</span><span>$${bMae.toFixed(0)}</span></div>`;
-    summaryHtml += `<div class="metric"><span>  상관계수</span><span>${bCorr.toFixed(3)}</span></div>`;
-    summaryHtml += `<div class="metric"><span>  가격범위 적중률</span><span>${bHitRate.toFixed(1)}%</span></div>`;
+  // Overall winner
+  const aPoints = (aMae < bMae ? 1:0) + (aMape < bMape ? 1:0) + (aCorr > bCorr ? 1:0) + (aHitRate > bHitRate ? 1:0) + (aWinCount > bWinCount ? 1:0);
+  const bPoints = 5 - aPoints - ((aMae===bMae?1:0)+(aMape===bMape?1:0)+(aCorr===bCorr?1:0)+(aHitRate===bHitRate?1:0)+(aWinCount===bWinCount?1:0));
 
-    const aWins = (aMae < bMae ? 1 : 0) + (aCorr > bCorr ? 1 : 0) + (aHitRate > bHitRate ? 1 : 0);
-    const bWins = 3 - aWins;
-    summaryHtml += `<div class="metric" style="margin-top:16px;border-top:2px solid #ffd93d;padding-top:12px">`;
-    if (aWins > bWins) {
-      summaryHtml += `<span style="font-size:18px">🏆 Winner: Option A (XClaw) ${aWins}-${bWins}</span>`;
-    } else if (bWins > aWins) {
-      summaryHtml += `<span style="font-size:18px">🏆 Winner: Option B (Claude) ${bWins}-${aWins}</span>`;
-    } else {
-      summaryHtml += `<span style="font-size:18px">🤝 Tie! 앙상블 고려</span>`;
-    }
-    summaryHtml += `</div>`;
+  summary += `<div style="margin-top:16px;padding-top:16px;border-top:2px solid #ffd93d;text-align:center;font-size:20px;font-weight:700;">`;
+  if (aPoints > bPoints) {
+    summary += `🏆 <span class="tag-a" style="font-size:16px;padding:4px 12px">Option A (XHunt Soul Score)</span> 승리 (${aPoints}-${bPoints})`;
+    summary += `<div style="color:#888;font-size:14px;margin-top:8px;font-weight:400">→ 6번째 factor로 XHunt Soul Score 사용 추천</div>`;
+  } else if (bPoints > aPoints) {
+    summary += `🏆 <span class="tag-b" style="font-size:16px;padding:4px 12px">Option B (Claude Credibility)</span> 승리 (${bPoints}-${aPoints})`;
+    summary += `<div style="color:#888;font-size:14px;margin-top:8px;font-weight:400">→ 6번째 factor로 Claude Credibility Score 사용 추천</div>`;
+  } else {
+    summary += `🤝 무승부 — 앙상블(두 점수 평균) 고려`;
   }
-  summaryHtml += `</div>`;
+  summary += `</div></div>`;
 
-  document.getElementById("results").innerHTML = summaryHtml + html;
+  document.getElementById("results").innerHTML = summary + html;
 }
 
 function pearson(x, y) {
@@ -367,7 +519,7 @@ function exportResults() {
   const blob = new Blob([JSON.stringify(allResults, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
-  a.download = "ab-test-results.json";
+  a.download = `ab-test-results-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 }
 </script>
