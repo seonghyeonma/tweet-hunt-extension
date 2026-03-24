@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KOL Scoring A/B Test — Old vs New Thresholds</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0a0f1a; color: #e0e0e0; padding: 24px; }
+  h1 { color: #2dd4a8; font-size: 22px; margin-bottom: 4px; }
+  .subtitle { color: #888; font-size: 13px; margin-bottom: 20px; }
+  .note { background: #2dd4a822; border: 1px solid #2dd4a844; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #2dd4a8; font-size: 13px; line-height: 1.6; }
+
+  /* KOL input cards */
+  .kol-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .kol-card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 16px; }
+  .kol-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .kol-handle { color: #2dd4a8; font-weight: 700; font-size: 15px; }
+  .kol-actual { color: #facc15; font-size: 13px; }
+  .kol-notes { color: #6b7280; font-size: 11px; margin-bottom: 8px; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .field label { display: block; color: #6b7280; font-size: 11px; margin-bottom: 2px; }
+  .field input, .field select { width: 100%; padding: 6px 8px; background: #1a2332; border: 1px solid #374151; border-radius: 6px; color: #fff; font-size: 13px; }
+  .field input:focus, .field select:focus { outline: none; border-color: #2dd4a8; }
+
+  /* Results */
+  .results-section { margin-top: 8px; }
+  .results-section h2 { color: #2dd4a8; font-size: 18px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; background: #111827; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+  th { background: #1a2332; color: #2dd4a8; padding: 10px 12px; text-align: left; font-size: 12px; white-space: nowrap; }
+  td { padding: 8px 12px; border-top: 1px solid #1f2937; font-size: 13px; }
+  .old { color: #ef4444; }
+  .new { color: #2dd4a8; }
+  .actual { color: #facc15; font-weight: 600; }
+  .better { background: #2dd4a815; }
+  .worse { background: #ef444415; }
+  .bold-row td { font-weight: 700; border-top: 2px solid #374151; }
+
+  /* Summary cards */
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .summary-card { background: #111827; border: 1px solid #1f2937; border-radius: 12px; padding: 16px; text-align: center; }
+  .summary-card .label { color: #6b7280; font-size: 12px; margin-bottom: 4px; }
+  .summary-card .value { font-size: 28px; font-weight: 700; }
+  .summary-card .sub { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+  /* Detail breakdown */
+  .detail-table { margin-top: 16px; }
+  .detail-table th { font-size: 11px; }
+  .detail-table td { font-size: 12px; padding: 6px 8px; }
+  .score-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+
+  .arrow-up { color: #2dd4a8; }
+  .arrow-down { color: #ef4444; }
+  .arrow-same { color: #6b7280; }
+</style>
+</head>
+<body>
+
+<h1>KOL Scoring A/B Test</h1>
+<p class="subtitle">Old Thresholds (A) vs New Follower-Adjusted Thresholds (B) — 5 KOL 비교</p>
+
+<div class="note">
+  <strong>사용법:</strong> 각 KOL의 데이터를 KOL Pricer 결과에서 가져와 입력하세요. 입력하면 자동으로 Old/New 점수와 가격이 계산됩니다.<br>
+  <strong>비교 항목:</strong> Old (기존 고정 ER 기준) vs New (팔로워 규모별 차등 ER 기준 + 완화된 Impression Stability)<br>
+  @0xBeyondLee 데이터는 스크린샷 기반으로 미리 입력되어 있습니다.
+</div>
+
+<div class="kol-grid" id="kolGrid"></div>
+
+<div class="results-section">
+  <h2>A/B 비교 결과</h2>
+  <div class="summary-grid" id="summaryCards"></div>
+  <div id="mainTable"></div>
+  <div id="detailTables"></div>
+</div>
+
+<script>
+// ===== 5 KOL data (pre-filled where available) =====
+const KOLS = [
+  { handle: "one_snowball", actual: 300, notes: "snowball - Binance KOL, 75K followers",
+    followers: 75000, avgEngagement: 200, avgImpressions: 30000, impressionCV: 0.6, updateCV: 0.5, xhuntScore: "", domain: "crypto" },
+  { handle: "BTC_Alert_", actual: 1500, notes: "Alert 的会所 - High-tier CN KOL",
+    followers: 120000, avgEngagement: 300, avgImpressions: 50000, impressionCV: 0.7, updateCV: 0.6, xhuntScore: "", domain: "crypto" },
+  { handle: "Arya_web3", actual: 1000, notes: "羊姐 - Web3 KOL",
+    followers: 35000, avgEngagement: 100, avgImpressions: 18000, impressionCV: 0.65, updateCV: 0.7, xhuntScore: "", domain: "crypto" },
+  { handle: "Wuhuoqiu", actual: 1600, notes: "老白 - ABCDE/OKX Ventures, 68.8K followers",
+    followers: 68800, avgEngagement: 250, avgImpressions: 40000, impressionCV: 0.5, updateCV: 0.4, xhuntScore: 96, domain: "crypto" },
+  { handle: "0xBeyondLee", actual: 1000, notes: "Beyond - CN Crypto KOL",
+    followers: 41287, avgEngagement: 149, avgImpressions: 24842, impressionCV: 0.7, updateCV: 0.8, xhuntScore: "", domain: "crypto" },
+];
+
+// ===== Scoring Functions =====
+const WEIGHTS = { followerScale: 0.17, followerQuality: 0.22, updateStability: 0.13, impressionStability: 0.17, engagementRate: 0.16, xhuntScore: 0.15 };
+const DOMAIN_MULT = { crypto: 1.4, finance: 1.4, tech: 1.3, business: 1.2, entertainment: 1.0, other: 1.0 };
+const BASE_CPM = 10, MAX_CPM_BONUS = 90;
+
+function scoreFollowerScale(f) {
+  if (f > 100000) return 100; if (f >= 50000) return 80; if (f >= 20000) return 60;
+  if (f >= 10000) return 40; if (f >= 5000) return 20; return 5;
+}
+function scoreUpdateStability(cv) {
+  if (cv < 0.2) return 100; if (cv <= 0.4) return 80; if (cv <= 0.6) return 60;
+  if (cv <= 1.0) return 40; return 20;
+}
+function scoreXHunt(s) {
+  if (s == null || s === "") return 50;
+  s = +s;
+  if (s >= 80) return 100; if (s >= 60) return 80; if (s >= 40) return 60;
+  if (s >= 20) return 40; return 20;
+}
+
+// OLD thresholds
+const OLD = {
+  followerQuality(er) { if (er > 2) return 100; if (er >= 1) return 75; if (er >= 0.5) return 50; if (er >= 0.1) return 25; return 10; },
+  engagement(er) { if (er > 3) return 100; if (er >= 2) return 80; if (er >= 1) return 60; if (er >= 0.5) return 40; return 20; },
+  impressionStability(cv) { if (cv < 0.2) return 100; if (cv <= 0.4) return 80; if (cv <= 0.6) return 60; if (cv <= 0.8) return 40; return 20; },
+};
+
+// NEW thresholds (follower-adjusted)
+const NEW = {
+  followerQuality(er, f) {
+    if (f >= 50000) { if (er > 1.0) return 100; if (er >= 0.5) return 80; if (er >= 0.25) return 60; if (er >= 0.1) return 40; return 15; }
+    if (f >= 20000) { if (er > 1.5) return 100; if (er >= 0.8) return 80; if (er >= 0.35) return 60; if (er >= 0.15) return 35; return 12; }
+    if (er > 2) return 100; if (er >= 1) return 75; if (er >= 0.5) return 50; if (er >= 0.1) return 25; return 10;
+  },
+  engagement(er, f) {
+    if (f >= 50000) { if (er > 1.5) return 100; if (er >= 0.8) return 80; if (er >= 0.4) return 60; if (er >= 0.15) return 40; return 20; }
+    if (f >= 20000) { if (er > 2.0) return 100; if (er >= 1.0) return 80; if (er >= 0.5) return 60; if (er >= 0.2) return 40; return 20; }
+    if (er > 3) return 100; if (er >= 2) return 80; if (er >= 1) return 60; if (er >= 0.5) return 40; return 20;
+  },
+  impressionStability(cv) { if (cv < 0.3) return 100; if (cv <= 0.5) return 80; if (cv <= 0.8) return 60; if (cv <= 1.2) return 40; return 20; },
+};
+
+function calcAll(d, version) {
+  const f = +d.followers || 0;
+  const er = f > 0 ? ((+d.avgEngagement || 0) / f) * 100 : 0;
+  const impCV = +d.impressionCV || 0;
+  const updCV = +d.updateCV || 0;
+  const xh = d.xhuntScore;
+  const dom = d.domain || "crypto";
+
+  const fScale = scoreFollowerScale(f);
+  const fq = version === "old" ? OLD.followerQuality(er) : NEW.followerQuality(er, f);
+  const upd = scoreUpdateStability(updCV);
+  const imp = version === "old" ? OLD.impressionStability(impCV) : NEW.impressionStability(impCV);
+  const eng = version === "old" ? OLD.engagement(er) : NEW.engagement(er, f);
+  const xhunt = scoreXHunt(xh);
+
+  const overall = fScale * WEIGHTS.followerScale + fq * WEIGHTS.followerQuality +
+    upd * WEIGHTS.updateStability + imp * WEIGHTS.impressionStability +
+    eng * WEIGHTS.engagementRate + xhunt * WEIGHTS.xhuntScore;
+
+  const cpm = BASE_CPM + (overall / 100) * MAX_CPM_BONUS;
+  const mult = DOMAIN_MULT[dom] || 1.0;
+  const price = (cpm * (+d.avgImpressions || 0) * mult) / 1000;
+
+  return {
+    scores: { fScale, fq, upd, imp, eng, xhunt },
+    overall: Math.round(overall * 10) / 10,
+    cpm: Math.round(cpm * 100) / 100,
+    price: Math.round(price),
+    priceMin: Math.round(price * 0.8),
+    priceMax: Math.round(price * 1.2),
+    er: Math.round(er * 1000) / 1000,
+    mult,
+  };
+}
+
+// ===== Render =====
+function renderInputCards() {
+  const grid = document.getElementById("kolGrid");
+  grid.innerHTML = "";
+  KOLS.forEach((kol, i) => {
+    grid.innerHTML += `
+    <div class="kol-card">
+      <div class="kol-header">
+        <span class="kol-handle">@${kol.handle}</span>
+        <span class="kol-actual">실제 가격: $${kol.actual}</span>
+      </div>
+      <div class="kol-notes">${kol.notes}</div>
+      <div class="field-grid">
+        <div class="field"><label>Followers</label><input type="number" data-kol="${i}" data-field="followers" value="${kol.followers}" /></div>
+        <div class="field"><label>Avg Engagement</label><input type="number" data-kol="${i}" data-field="avgEngagement" value="${kol.avgEngagement}" /></div>
+        <div class="field"><label>Avg Impressions</label><input type="number" data-kol="${i}" data-field="avgImpressions" value="${kol.avgImpressions}" /></div>
+        <div class="field"><label>Impression CV</label><input type="number" step="0.05" data-kol="${i}" data-field="impressionCV" value="${kol.impressionCV}" /></div>
+        <div class="field"><label>Update CV</label><input type="number" step="0.05" data-kol="${i}" data-field="updateCV" value="${kol.updateCV}" /></div>
+        <div class="field"><label>XHunt Soul Score</label><input type="number" data-kol="${i}" data-field="xhuntScore" value="${kol.xhuntScore}" placeholder="비어있으면 50" /></div>
+        <div class="field" style="grid-column:span 2"><label>Domain</label>
+          <select data-kol="${i}" data-field="domain">
+            <option value="crypto" ${kol.domain==="crypto"?"selected":""}>Crypto / Web3</option>
+            <option value="finance" ${kol.domain==="finance"?"selected":""}>Finance</option>
+            <option value="tech" ${kol.domain==="tech"?"selected":""}>Tech</option>
+            <option value="business" ${kol.domain==="business"?"selected":""}>Business</option>
+            <option value="entertainment" ${kol.domain==="entertainment"?"selected":""}>Entertainment</option>
+            <option value="other" ${kol.domain==="other"?"selected":""}>Other</option>
+          </select>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // Bind events
+  grid.querySelectorAll("input, select").forEach(el => {
+    el.addEventListener("input", () => {
+      const i = +el.dataset.kol;
+      const field = el.dataset.field;
+      KOLS[i][field] = el.value;
+      updateResults();
+    });
+  });
+}
+
+function arrow(diff) {
+  if (diff > 0) return `<span class="arrow-up">+${diff.toFixed(1)} ▲</span>`;
+  if (diff < 0) return `<span class="arrow-down">${diff.toFixed(1)} ▼</span>`;
+  return `<span class="arrow-same">—</span>`;
+}
+
+function updateResults() {
+  // Calculate for each KOL
+  const results = KOLS.map(kol => ({
+    handle: kol.handle,
+    actual: kol.actual,
+    old: calcAll(kol, "old"),
+    new_: calcAll(kol, "new"),
+  }));
+
+  // Summary metrics
+  let oldMAE = 0, newMAE = 0, oldHits = 0, newHits = 0;
+  results.forEach(r => {
+    oldMAE += Math.abs(r.old.price - r.actual);
+    newMAE += Math.abs(r.new_.price - r.actual);
+    if (r.actual >= r.old.priceMin && r.actual <= r.old.priceMax) oldHits++;
+    if (r.actual >= r.new_.priceMin && r.actual <= r.new_.priceMax) newHits++;
+  });
+  oldMAE /= results.length;
+  newMAE /= results.length;
+
+  const improvement = ((oldMAE - newMAE) / oldMAE * 100);
+
+  document.getElementById("summaryCards").innerHTML = `
+    <div class="summary-card">
+      <div class="label">Old (A) 평균 오차</div>
+      <div class="value old">$${oldMAE.toFixed(0)}</div>
+      <div class="sub">적중률: ${(oldHits/results.length*100).toFixed(0)}% (${oldHits}/${results.length})</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">New (B) 평균 오차</div>
+      <div class="value new">$${newMAE.toFixed(0)}</div>
+      <div class="sub">적중률: ${(newHits/results.length*100).toFixed(0)}% (${newHits}/${results.length})</div>
+    </div>
+    <div class="summary-card">
+      <div class="label">개선율</div>
+      <div class="value" style="color:${improvement > 0 ? '#2dd4a8' : '#ef4444'}">${improvement > 0 ? '+' : ''}${improvement.toFixed(1)}%</div>
+      <div class="sub">${improvement > 0 ? 'New가 더 정확' : 'Old가 더 정확'}</div>
+    </div>`;
+
+  // Main comparison table
+  let html = `<table>
+    <tr>
+      <th>KOL</th>
+      <th>ER%</th>
+      <th>Old Score</th>
+      <th>Old Price</th>
+      <th>New Score</th>
+      <th>New Price</th>
+      <th>실제 가격</th>
+      <th>변화</th>
+      <th>정확도</th>
+    </tr>`;
+
+  results.forEach(r => {
+    const scoreDiff = r.new_.overall - r.old.overall;
+    const priceDiff = r.new_.price - r.old.price;
+    const oldErr = Math.abs(r.old.price - r.actual);
+    const newErr = Math.abs(r.new_.price - r.actual);
+    const betterClass = newErr < oldErr ? "better" : newErr > oldErr ? "worse" : "";
+
+    html += `<tr class="${betterClass}">
+      <td><strong>@${r.handle}</strong></td>
+      <td>${r.old.er.toFixed(3)}%</td>
+      <td class="old">${r.old.overall}</td>
+      <td class="old">$${r.old.price.toLocaleString()}</td>
+      <td class="new">${r.new_.overall}</td>
+      <td class="new">$${r.new_.price.toLocaleString()}</td>
+      <td class="actual">$${r.actual.toLocaleString()}</td>
+      <td>${arrow(scoreDiff)} / ${priceDiff >= 0 ? '+' : ''}$${priceDiff.toLocaleString()}</td>
+      <td>${newErr < oldErr ? '✅ 개선' : newErr > oldErr ? '❌ 악화' : '➖ 동일'}</td>
+    </tr>`;
+  });
+  html += `</table>`;
+  document.getElementById("mainTable").innerHTML = html;
+
+  // Detail breakdown per KOL
+  const labels = [
+    { key: "fScale", name: "Follower Scale", w: "17%" },
+    { key: "fq", name: "Follower Quality (ER)", w: "22%" },
+    { key: "upd", name: "Update Stability", w: "13%" },
+    { key: "imp", name: "Impression Stability", w: "17%" },
+    { key: "eng", name: "Engagement Rate", w: "16%" },
+    { key: "xhunt", name: "XHunt Soul Score", w: "15%" },
+  ];
+
+  let detail = '<h3 style="color:#2dd4a8;margin:20px 0 12px">각 KOL 세부 점수 비교</h3>';
+  results.forEach(r => {
+    detail += `<details style="margin-bottom:8px"><summary style="cursor:pointer;color:#fff;font-size:14px;padding:8px;background:#111827;border-radius:8px">
+      @${r.handle} — Old: ${r.old.overall} → New: ${r.new_.overall} (${arrow(r.new_.overall - r.old.overall)})
+    </summary>
+    <table class="detail-table">
+      <tr><th>항목</th><th>가중치</th><th>Old</th><th>New</th><th>변화</th></tr>`;
+    labels.forEach(l => {
+      const o = r.old.scores[l.key], n = r.new_.scores[l.key];
+      const diff = n - o;
+      detail += `<tr><td>${l.name}</td><td>${l.w}</td><td class="old">${o}</td><td class="new">${n}</td><td>${arrow(diff)}</td></tr>`;
+    });
+    detail += `<tr class="bold-row"><td>Overall</td><td>100%</td><td class="old">${r.old.overall}</td><td class="new">${r.new_.overall}</td><td>${arrow(r.new_.overall - r.old.overall)}</td></tr>`;
+    detail += `<tr class="bold-row"><td>Estimated Price</td><td></td><td class="old">$${r.old.price.toLocaleString()}</td><td class="new">$${r.new_.price.toLocaleString()}</td><td>실제: <span class="actual">$${r.actual.toLocaleString()}</span></td></tr>`;
+    detail += `</table></details>`;
+  });
+  document.getElementById("detailTables").innerHTML = detail;
+}
+
+// Init
+renderInputCards();
+updateResults();
+</script>
+</body>
+</html>

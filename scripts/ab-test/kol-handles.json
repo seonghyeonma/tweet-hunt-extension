@@ -1,0 +1,32 @@
+[
+  {
+    "handle": "one_snowball",
+    "actual_price_usd": 300,
+    "category": "crypto",
+    "notes": "snowball - Binance cooperated KOL, 75K followers"
+  },
+  {
+    "handle": "BTC_Alert_",
+    "actual_price_usd": 1500,
+    "category": "crypto",
+    "notes": "Alert 的会所 - High-tier CN KOL"
+  },
+  {
+    "handle": "Arya_web3",
+    "actual_price_usd": 1000,
+    "category": "crypto",
+    "notes": "羊姐 - Web3 KOL"
+  },
+  {
+    "handle": "Wuhuoqiu",
+    "actual_price_usd": 1600,
+    "category": "crypto",
+    "notes": "老白 - Former investor at ABCDE and OKX Ventures, 68.8K followers"
+  },
+  {
+    "handle": "0xBeyondLee",
+    "actual_price_usd": 1000,
+    "category": "crypto",
+    "notes": "Beyond - CN Crypto KOL"
+  }
+]

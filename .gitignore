@@ -3,3 +3,7 @@
 */node_modules
 */dist
 */package-lock.json
+scripts/ab-test/.env
+scripts/ab-test/node_modules/
+scripts/ab-test/results.json
+node_modules/
