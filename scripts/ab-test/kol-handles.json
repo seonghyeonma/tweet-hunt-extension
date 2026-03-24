@@ -1,62 +1,80 @@
 [
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_1",
+    "handle": "Bitwu",
     "actual_price_usd": 0,
     "category": "crypto",
-    "notes": "Replace with actual KOL handle and their post price"
+    "notes": "BITWU - Top CN KOL, 348K followers. ⚠️ 가격 데이터 필요"
   },
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_2",
+    "handle": "Wuhuoqiu",
     "actual_price_usd": 0,
     "category": "crypto",
-    "notes": ""
+    "notes": "老白 - Former investor at ABCDE and OKX Ventures, 68.8K followers. ⚠️ 가격 데이터 필요"
   },
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_3",
+    "handle": "anymose96",
     "actual_price_usd": 0,
     "category": "crypto",
-    "notes": ""
+    "notes": "Anymose - High-quality content creator; OKX cooperated KOL, 27K followers. ⚠️ 가격 데이터 필요"
   },
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_4",
+    "handle": "starzqeth",
     "actual_price_usd": 0,
     "category": "crypto",
-    "notes": ""
+    "notes": "Star@Day1Global - Web3 projects, AI practices, brand narratives, 39.7K followers. ⚠️ 가격 데이터 필요"
   },
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_5",
+    "handle": "Airdrop_Guard",
     "actual_price_usd": 0,
     "category": "crypto",
-    "notes": ""
+    "notes": "小熊饼干 - High-quality content creator; OKX cooperated KOL, 51K followers. ⚠️ 가격 데이터 필요"
   },
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_6",
-    "actual_price_usd": 0,
+    "handle": "BroLeonAus",
+    "actual_price_usd": 5000,
     "category": "crypto",
-    "notes": ""
+    "notes": "土澳大狮兄 - Top tier KOL, interviewed CZ at HK Web3 Festival, 116K followers"
   },
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_7",
-    "actual_price_usd": 0,
+    "handle": "JiamigouCn",
+    "actual_price_usd": 800,
     "category": "crypto",
-    "notes": ""
+    "notes": "加密狗 - High-quality content creator; OKX cooperated KOL, 178.9K followers"
   },
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_8",
-    "actual_price_usd": 0,
+    "handle": "ZKSgu",
+    "actual_price_usd": 1200,
     "category": "crypto",
-    "notes": ""
+    "notes": "孤鹤 - Top yapper; Binance cooperated KOL, 60.7K followers"
   },
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_9",
-    "actual_price_usd": 0,
+    "handle": "EvaCmore",
+    "actual_price_usd": 400,
     "category": "crypto",
-    "notes": ""
+    "notes": "树姐 - Focusing on Sui, traffic KOL, 55K followers"
   },
   {
-    "handle": "REPLACE_WITH_REAL_HANDLE_10",
-    "actual_price_usd": 0,
+    "handle": "0x_xifeng",
+    "actual_price_usd": 400,
     "category": "crypto",
-    "notes": ""
+    "notes": "spark - High-quality content creator; Binance cooperated KOL, 19K followers"
+  },
+  {
+    "handle": "KuiGas",
+    "actual_price_usd": 3000,
+    "category": "crypto",
+    "notes": "Kuigas - Top Chinese KOL, 105K followers"
+  },
+  {
+    "handle": "silverfang88",
+    "actual_price_usd": 1000,
+    "category": "crypto",
+    "notes": "子时 - OKX cooperated KOL; top influence CN KOL; top yapper, 93.7K followers"
+  },
+  {
+    "handle": "one_snowball",
+    "actual_price_usd": 300,
+    "category": "crypto",
+    "notes": "Snowball - Binance cooperated KOL; good quality CN KOL, 75K followers"
   }
 ]
