@@ -2,4 +2,6 @@
 .DS_Store
 */node_modules
 */dist
-*/package-lock.json
+*/package-lock.jsonscripts/ab-test/.env
+scripts/ab-test/node_modules/
+scripts/ab-test/results.json

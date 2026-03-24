@@ -1,6 +1,15 @@
 import axios from "axios";
 import Anthropic from "@anthropic-ai/sdk";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
+
+// Load .env file if present
+if (existsSync(".env")) {
+  const envContent = readFileSync(".env", "utf-8");
+  for (const line of envContent.split("\n")) {
+    const match = line.match(/^([^#=]+)=(.*)$/);
+    if (match) process.env[match[1].trim()] = match[2].trim();
+  }
+}
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
