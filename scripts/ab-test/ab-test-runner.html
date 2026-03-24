@@ -43,8 +43,8 @@
 <p class="subtitle">Option A: XClaw Soul Index vs Option B: Claude Credibility Score</p>
 
 <div class="note">
-  API 키를 입력하고 "Run Test" 버튼을 누르면 13명의 KOL에 대해 두 가지 스코어를 수집하고 비교합니다.
-  <br>예상 비용: XClaw ~14 credits (무료), Claude ~$0.08
+  API 키를 입력하고 "Run Test" 버튼을 누르면 5명의 KOL에 대해 두 가지 스코어를 수집하고 비교합니다.
+  <br>예상 비용: XClaw ~6 credits (무료), Claude ~$0.03
 </div>
 
 <div class="config">
@@ -68,19 +68,11 @@
 
 <script>
 const KOL_LIST = [
-  { handle: "Bitwu", actual_price_usd: 2250, category: "crypto", notes: "BITWU - Top CN KOL, 348K" },
+  { handle: "one_snowball", actual_price_usd: 300, category: "crypto", notes: "snowball - Binance KOL, 75K" },
+  { handle: "BTC_Alert_", actual_price_usd: 1500, category: "crypto", notes: "Alert 的会所 - High-tier CN KOL" },
+  { handle: "Arya_web3", actual_price_usd: 1000, category: "crypto", notes: "羊姐 - Web3 KOL" },
   { handle: "Wuhuoqiu", actual_price_usd: 1600, category: "crypto", notes: "老白 - ABCDE/OKX Ventures, 68.8K" },
-  { handle: "anymose96", actual_price_usd: 800, category: "crypto", notes: "Anymose - OKX KOL, 27K" },
-  { handle: "starzqeth", actual_price_usd: 1200, category: "crypto", notes: "Star - Web3/AI, 39.7K" },
-  { handle: "Airdrop_Guard", actual_price_usd: 800, category: "crypto", notes: "小熊饼干 - OKX KOL, 51K" },
-  { handle: "BroLeonAus", actual_price_usd: 5000, category: "crypto", notes: "土澳大狮兄 - Top tier, 116K" },
-  { handle: "JiamigouCn", actual_price_usd: 800, category: "crypto", notes: "加密狗 - OKX KOL, 178.9K" },
-  { handle: "ZKSgu", actual_price_usd: 1200, category: "crypto", notes: "孤鹤 - Binance KOL, 60.7K" },
-  { handle: "EvaCmore", actual_price_usd: 400, category: "crypto", notes: "树姐 - Sui KOL, 55K" },
-  { handle: "0x_xifeng", actual_price_usd: 400, category: "crypto", notes: "spark - Binance KOL, 19K" },
-  { handle: "KuiGas", actual_price_usd: 3000, category: "crypto", notes: "Kuigas - Top CN KOL, 105K" },
-  { handle: "silverfang88", actual_price_usd: 1000, category: "crypto", notes: "子时 - OKX KOL, 93.7K" },
-  { handle: "one_snowball", actual_price_usd: 300, category: "crypto", notes: "Snowball - Binance KOL, 75K" },
+  { handle: "0xBeyondLee", actual_price_usd: 1000, category: "crypto", notes: "Beyond - CN Crypto KOL" },
 ];
 
 const XCLAW_BASE = "https://pro.xclaw.info";
